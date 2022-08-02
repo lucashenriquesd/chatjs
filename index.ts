@@ -27,6 +27,22 @@ io.on('connection', (socket) => {
   });
 
   socket.on('chat message', (msg) => {
+    if (msg === '/help') {
+      io.to(socket.id).emit('chat message', '/w socketId message - whisper to a specific person');
+      return;
+    }
+
+    if (msg.startsWith('/w ')) {
+      io.to(socket.id).emit('chat message', `you whispered to ${msg.substring(3, 23)}: ${msg.substring(24)}`);
+      io.to(msg.substring(3, 23)).emit('chat message', `${socket.id} - whispered: ${msg.substring(24)}`);
+      return;
+    }
+
+    if (msg.startsWith('/')) {
+      io.to(socket.id).emit('chat message', 'command not found');
+      return;
+    }
+
     console.log(`message: ${socket.id}: ${msg}`);
     io.emit('chat message', `${socket.id}: ${msg}`);
   });
