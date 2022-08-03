@@ -2,6 +2,8 @@ import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import path from 'path';
+import { CommandFactory } from './commands/command-factory';
+import { Command } from './commands/command';
 
 const app = express();
 const server = http.createServer(app);
@@ -27,24 +29,8 @@ io.on('connection', (socket) => {
   });
 
   socket.on('chat message', (msg) => {
-    if (msg === '/help') {
-      io.to(socket.id).emit('chat message', '/w socketId message - whisper to a specific person');
-      return;
-    }
-
-    if (msg.startsWith('/w ')) {
-      io.to(socket.id).emit('chat message', `you whispered to ${msg.substring(3, 23)}: ${msg.substring(24)}`);
-      io.to(msg.substring(3, 23)).emit('chat message', `${socket.id} - whispered: ${msg.substring(24)}`);
-      return;
-    }
-
-    if (msg.startsWith('/')) {
-      io.to(socket.id).emit('chat message', 'command not found');
-      return;
-    }
-
-    console.log(`message: ${socket.id}: ${msg}`);
-    io.emit('chat message', `${socket.id}: ${msg}`);
+    const command = new CommandFactory().make(msg);
+    return command.handle(io, socket, msg)
   });
 });
 
